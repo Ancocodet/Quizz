@@ -1,0 +1,386 @@
+<html lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1"/>
+        <title>Informatik | Quizz</title>
+
+        <!-- CSS  -->
+        <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+        <link href="css/materialize.css" type="text/css" rel="stylesheet" media="screen,projection"/>
+        <link href="css/style.css" type="text/css" rel="stylesheet" media="screen,projection"/>
+    </head>
+    <body onload="loadquestion();">
+        <div id="pause" class="modal">
+            <div class="modal-content">
+                <center>
+                    <h4 class="orange-text">Pausenmodus</h4>
+                        <p class="gray-text">Der Pausenmodus wurde <a class="green-text">aktiviert,</a> du kannst ihn jederzeit beenden.</p>
+                </center>
+            </div>
+            <div class="modal-footer">
+                <center>
+                    <a onclick="pausetimer();" class="modal-action modal-close waves-effect waves-green btn-flat">Weiter</a>
+                </center>
+            </div>
+        </div>
+        <div id="start" class="modal">
+            <div class="modal-content">
+                <center>
+                    <h4 class="blue-text">Quizz<span class="new badge orange" data-badge-caption="Beta">0.1</span></h4>
+                        <h5 class="gray-text">Willkommen beim Quizz. Viel Spaß beim lösen.</h5>
+                        <p class="red-text">Zurzeit sind nur wenige Fragen vorhanden.</p>
+                </center>
+            </div>
+            <div class="modal-footer">
+                <center>
+                    <a onclick="pausetimer();" class="modal-action modal-close waves-effect waves-green btn-flat">Starten</a>
+                </center>
+            </div>
+        </div>
+        <div id="failure" class="modal">
+            <div class="modal-content">
+                <center>
+                    <h4 class="red-text">Die ausgewählte Antwort war falsch.</h4>
+                    <h5 class="gray-text">Versuche es doch später erneut!</h5>
+                </center>
+            </div>
+            <div class="modal-footer">
+                <center>
+                    <a onclick="restartquiz();" class="modal-action modal-close waves-effect waves-green btn-flat">Neustarten</a>
+                </center>
+            </div>
+        </div>
+        <div id="timeup" class="modal">
+            <div class="modal-content">
+                <center>
+                    <h4 class="red-text">Die Zeit ist abgelaufen.</h4>
+                    <h5 class="gray-text">Versuche es doch später erneut!</h5>
+                </center>
+            </div>
+            <div class="modal-footer">
+                <center>
+                    <a onclick="restartquiz();" class="modal-action modal-close waves-effect waves-green btn-flat">Neustarten</a>
+                </center>
+            </div>
+        </div>
+        <h4 id="question" align="center"><a id='questionnum' class='btn-floating btn-large green'>1</a>In welchem Jahr begann der 2.Weltkrieg? <a class='waves-effect waves-light btn-floating btn-large orange' onclick='pausetimer();'><i class='material-icons'>pause</i></a></h4>
+        <center>
+            <div class="progress">
+                <div id="cooldown" class="determinate" style="width: 100%">100</div>
+            </div>
+            <br>   
+            <div id="buttons" class="align-center">
+                <a id="button1" style="width: 18%; right: 1%;" class="grey darken-2 waves-effect waves-light btn-large" onclick="answeroptionone();">2017</a>
+                <a id="button2" style="width: 18%;" class="grey darken-2 waves-effect waves-light btn-large" onclick="answeroptiontwo();">1993</a>
+                <br>
+                <br>
+                <a id="button3" style="width: 18%; right: 1%; top: 4%;" class="grey darken-2 waves-effect waves-light btn-large" onclick="answeroptionthree();">1770</a>
+                <a id="button4" style="width: 18%;" class="grey darken-2 waves-effect waves-light btn-large" onclick="answeroptionfour();">1779</a>
+            </div>
+            <div id="buttonfinish">
+            </div>
+        </center>
+        
+        <script src='js/jquery-latest.js'></script>
+        <script src='js/materialize.js'></script>
+        <script src='js/init.js'></script>
+  
+        <script>
+            var failure = false;
+            var logedin = false;
+            var stopped = false;
+            var paused = true;
+            var checked;
+            
+            var questionlist;
+            
+            var question;
+            var answer1;
+            var answer2;
+            var answer3;
+            var rightanswer;
+            
+            var loaded = false;
+            
+            function loadquestion(){
+                var testObj = new XMLHttpRequest();
+                testObj.open("GET", "questions/questions.txt");
+                testObj.onreadystatechange = function(){
+                    if (testObj.readyState == 4 && !loaded) {
+                        loaded = true;
+                        questionlist = testObj.responseText;
+                        var answers = questionlist.split(":")[0];
+                    
+                        question = answers.split(",")[5];
+
+                        document.getElementById("question").innerHTML = "<a id='questionnum' class='btn-floating btn-large green'>1</a> "+ question + " <a class='waves-effect waves-light btn-floating btn-large orange' onclick='pausetimer();'><i class='material-icons'>pause</i></a>"; 
+
+                        document.getElementById("button1").innerHTML = answer1 = answers.split(",")[0];
+                        document.getElementById("button2").innerHTML = answer2 = answers.split(",")[1];
+                        document.getElementById("button3").innerHTML = answer3 = answers.split(",")[2];
+                        document.getElementById("button4").innerHTML = answer4 = answers.split(",")[3];
+
+                        rightanswer = answers.split(",")[4];
+                        
+                        $('#start').modal('open');
+                    }
+                }
+                testObj.send(null);
+            }
+            
+            function loadanswers(){
+                if(parseInt(document.getElementById("questionnum").innerHTML) <= questionlist.split(":").length){
+                    var answers = questionlist.split(":")[(parseInt(document.getElementById("questionnum").innerHTML)-1)];
+                    question = answers.split(",")[5];
+                    
+                    document.getElementById("question").innerHTML = "<a id='questionnum' class='btn-floating btn-large green'>"+document.getElementById("questionnum").innerHTML+"</a> "+ question + " <a class='waves-effect waves-light btn-floating btn-large orange' onclick='pausetimer();'><i class='material-icons'>pause</i></a>"; 
+                    
+                    var button1 = document.getElementById("button1")
+                    button1.innerHTML = answers.split(",")[0]; answer1 = answers.split(",")[0];
+                    document.getElementById("button2").innerHTML = answers.split(",")[1]; answer2 = answers.split(",")[1];
+                    document.getElementById("button3").innerHTML = answers.split(",")[2]; answer3 = answers.split(",")[2];
+                    document.getElementById("button4").innerHTML = answers.split(",")[3];answer4 = answers.split(",")[3];
+        
+                    rightanswer = answers.split(",")[4];
+                    
+                    stopped = false;   
+                }else{
+                    document.getElementById("question").innerHTML = "<a id='questionnum' class='btn-floating btn-large green'>"+document.getElementById("questionnum").innerHTML+"</a> Herzlichen Glückwunsch! <a class='waves-effect waves-light btn-floating btn-large orange' onclick='restartquiz();'><i class='material-icons'>autorenew</i></a>";
+                    
+                    var buttons = document.getElementById("buttons");
+                    buttons.innerHTML = "<center>"+
+                                            "<a >" + 
+                                                "<i class='material-icons orange-text'>grade</i>" + 
+                                                "<i class='material-icons orange-text'>grade</i>" +
+                                                "<i class='material-icons orange-text'>grade</i>" +
+                                                "<i class='material-icons orange-text'>grade</i>" + 
+                                                "<i class='material-icons orange-text'>grade</i>" +
+                                            "</a>" +
+                                            "<h4 class='grey-text darken-2'>Du hast alle Fragen erfolreich beantwortet.</h4>"
+                                        "</center>";
+                }
+            }
+            
+            function pausetimer(){
+                if(paused != true){
+                    paused = true;
+                    $('#pause').modal('open');
+                }else{
+                    paused = false;
+                }
+            }
+            
+            function restartquiz(){
+                if(paused != true){
+                    paused = true;
+                }
+                if(logedin){
+                    var oldbutton = document.getElementById(checked); 
+                    oldbutton.setAttribute("class", "grey darken-2 waves-effect waves-light btn-large");
+                    var perform = document.getElementById("buttonfinish");
+                    perform.innerHTML = ""   
+                }
+                document.getElementById("buttons").innerHTML = "<a id='button1' style='width: 18%; right: 1%; top: 4%;' class='grey darken-2 waves-effect waves-light btn-large' onclick='answeroptionone();'>2017</a>"+
+                "<a id='button2' style='width: 18%;' class='grey darken-2 waves-effect waves-light btn-large' onclick='answeroptiontwo();'>1993</a>"+
+                "<br>"+
+                "<br>"+
+                "<a id='button3' style='width: 18%; right: 1%; top: 4%;' class='grey darken-2 waves-effect waves-light btn-large' onclick='answeroptionthree();'>1770</a>"+
+                "<a id='button4' style='width: 18%;' class='grey darken-2 waves-effect waves-light btn-large' onclick='answeroptionfour();'>1779</a>";
+                
+                var count = document.getElementById("cooldown");
+                count.innerHTML = 100;
+                count.setAttribute("style", "width: " + (parseInt(count.innerHTML)) + "%");
+                var questioncount = document.getElementById("questionnum");
+                questioncount.innerHTML = 1;
+                        
+                var questionnum = document.getElementById("question");
+                questionnum.setAttribute("alt", questioncount.innerHTML);
+                
+                checked = "";
+                logedin = false;
+                stopped = false;
+                failure = false;
+                loadanswers();
+                paused = false;
+            }
+           
+            function submitanswer(){
+                if(logedin){
+                    stopped = true;
+                    if(checked == rightanswer){
+                        var oldbutton = document.getElementById(checked); 
+                        oldbutton.setAttribute("class", "grey darken-2 waves-effect waves-light btn-large");
+                        var perform = document.getElementById("buttonfinish");
+                        perform.innerHTML = ""
+                        var count = document.getElementById("cooldown");
+                        count.innerHTML = 100;
+                        count.setAttribute("style", "width: " + (parseInt(count.innerHTML)) + "%"); 
+                        
+                        var questioncount = document.getElementById("questionnum");
+                        questioncount.innerHTML = parseInt(questioncount.innerHTML)+1;
+                        
+                        var questionnum = document.getElementById("question");
+                        questionnum.setAttribute("alt", questioncount.innerHTML);
+                        
+                        checked = "";
+                        logedin = false;
+                        loadanswers();
+                    }else{
+                        $('#failure').modal('open');
+                    }
+                }
+            }
+            
+            function answeroptionone(){
+                if(!stopped){
+                    if(logedin != true){
+                        var button = document.getElementById("button1");
+                        button.setAttribute("class", "green lighten-2 waves-effect waves-light btn-large");
+
+                        var perform = document.getElementById("buttonfinish");
+
+                        perform.innerHTML = "<br><a style='width: 15%;' onclick='submitanswer();' class='orange waves-effect waves-light btn-large'>Bestätigen</a>"
+
+                        logedin = true;
+                        checked = "button1";
+                    }else if(checked != "button1"){ 
+                        var oldbutton = document.getElementById(checked); 
+                        oldbutton.setAttribute("class", "grey darken-2 waves-effect waves-light btn-large");
+
+                        var button = document.getElementById("button1");
+                        button.setAttribute("class", "green lighten-2 waves-effect waves-light btn-large");
+
+                        logedin = true;
+                        checked = "button1";
+                    }else{
+                        logedin = false;
+
+                        var button = document.getElementById(checked);
+                        button.setAttribute("class", "grey darken-2 waves-effect waves-light btn-large");
+
+                        var perform = document.getElementById("buttonfinish");
+
+                        perform.innerHTML = "";
+                    }   
+                }
+            }
+            
+            function answeroptiontwo(){
+                if(!stopped){
+                    if(logedin != true){
+                        var button = document.getElementById("button2");
+                        button.setAttribute("class", "green lighten-2 waves-effect waves-light btn-large");
+                
+                        var perform = document.getElementById("buttonfinish");
+                
+                        perform.innerHTML = "<br><a style='width: 15%;' onclick='submitanswer();' class='orange waves-effect waves-light btn-large'>Bestätigen</a>"
+                
+                        logedin = true;
+                        checked = "button2";
+                    }else if(checked != "button2"){ 
+                        var oldbutton = document.getElementById(checked); 
+                        oldbutton.setAttribute("class", "grey darken-2 waves-effect waves-light btn-large");
+
+                        var button = document.getElementById("button2");
+                        button.setAttribute("class", "green lighten-2 waves-effect waves-light btn-large");
+
+                        logedin = true;
+                        checked = "button2";
+                    }else{
+                        logedin = false;
+
+                        var button = document.getElementById(checked);
+                        button.setAttribute("class", "black lighten-2 waves-effect waves-light btn-large");
+
+                        var perform = document.getElementById("buttonfinish");
+
+                        perform.innerHTML = "";
+                    }
+                }
+            }
+            
+            function answeroptionthree(){
+                if(!stopped){
+                    if(logedin != true){
+                        var button = document.getElementById("button3");
+                        button.setAttribute("class", "green lighten-2 waves-effect waves-light btn-large");
+
+                        var perform = document.getElementById("buttonfinish");
+
+                        perform.innerHTML = "<br><a style='width: 15%;' onclick='submitanswer();' class='orange waves-effect waves-light btn-large'>Bestätigen</a>"
+
+                        logedin = true;
+                        checked = "button3";
+                    }else if(checked != "button3"){ 
+                        var oldbutton = document.getElementById(checked); 
+                        oldbutton.setAttribute("class", "grey darken-2 waves-effect waves-light btn-large");
+
+                        var button = document.getElementById("button3");
+                        button.setAttribute("class", "green lighten-2 waves-effect waves-light btn-large");
+
+                        logedin = true;
+                        checked = "button3";
+                    }else{
+                        logedin = false;
+
+                        var button = document.getElementById(checked);
+                        button.setAttribute("class", "grey darken-2 waves-effect waves-light btn-large");
+
+                        var perform = document.getElementById("buttonfinish");
+                        perform.innerHTML = "";
+                    }
+                }
+            }
+            
+            function answeroptionfour(){
+                if(!stopped){
+                    if(logedin != true){
+                        var button = document.getElementById("button4");
+                        button.setAttribute("class", "green lighten-2 waves-effect waves-light btn-large");
+
+                        var perform = document.getElementById("buttonfinish");
+
+                        perform.innerHTML = "<br><a style='width: 15%;' onclick='submitanswer();' class='orange waves-effect waves-light btn-large'>Bestätigen</a>"
+
+                        logedin = true;
+                        checked = "button4";
+                    }else if(checked != "button4"){ 
+                        var oldbutton = document.getElementById(checked); 
+                        oldbutton.setAttribute("class", "grey darken-2 waves-effect waves-light btn-large");
+
+                        var button = document.getElementById("button4");
+                        button.setAttribute("class", "green lighten-2 waves-effect waves-light btn-large");
+
+                        logedin = true;
+                        checked = "button4";
+                    }else{
+                        logedin = false;
+
+                        var button = document.getElementById(checked);
+                        button.setAttribute("class", "grey darken-2 waves-effect waves-light btn-large");
+
+                        var perform = document.getElementById("buttonfinish");
+
+                        perform.innerHTML = "";
+                    }
+                }
+            }
+            
+            cooldownfc = function(){
+                if(!stopped && !paused){
+                    var count = document.getElementById("cooldown");
+                    if(parseInt(count.innerHTML) != 0){
+                        count.innerHTML = parseInt(count.innerHTML)-1;
+                        count.setAttribute("style", "width: " + (parseInt(count.innerHTML)) + "%");   
+                    }else if(failure != true){
+                        failure = true;
+                        $('#timeup').modal('open');
+                        /*var buttons = document.getElementById("buttons");
+                        buttons.innerHTML = "<h4 class='red-text'>Zeit ist um!</h4>";*/
+                    }   
+                }   
+             }    
+             setInterval(cooldownfc, 250);
+        </script>
+    </body>
+</html>    
